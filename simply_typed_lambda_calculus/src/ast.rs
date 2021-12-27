@@ -16,7 +16,7 @@ pub enum Type {
 //  | Term Term           -- term application
 //  | λ Var : Type . Term -- term abstraction
 //  | (Term)              -- grouping
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Term {
   Int(i32),
   // Var
