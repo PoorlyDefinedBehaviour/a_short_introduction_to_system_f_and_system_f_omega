@@ -1,0 +1,45 @@
+#![warn(unknown_lints)]
+#![allow(clippy::all)] 
+use crate::ast::{Term, Type};
+use std::str::FromStr;
+
+grammar;
+
+identifier = r"[a-z]";
+
+pub Term: Term = {
+  "λ" <var: identifier> ":" <param_type: Type> "." <body: Term> => 
+    Term::Abs {
+      param_name: String::from(var), 
+      param_type, 
+      body: Box::new(body) 
+    },
+
+  Term1
+}
+
+Term1: Term = {
+  <f: Term1> <arg: Terminal> => Term::App(Box::new(f), Box::new(arg)),
+
+  Terminal
+}
+
+Terminal: Term = {
+  Int => Term::Int(<>),
+
+  identifier => Term::Var(String::from(<>)),
+
+  "(" <Term> ")",
+}
+
+Int: i32 = <s: r"[0-9]+"> => i32::from_str(s).unwrap();
+
+Type: Type = {
+  #[precedence(level="1")]
+  "Int" => Type::Int,
+
+  #[precedence(level="2")]
+  #[assoc(side="right")]
+  <param_type: Type> "->" <return_type: Type> =>
+    Type::Arrow(Box::new(param_type), Box::new(return_type)),
+}
