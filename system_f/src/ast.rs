@@ -24,8 +24,8 @@ pub enum Type {
   Forall {
     type_var: String,
     kind: Kind,
-    arg_type: Box<Type>,
-    body_type: Box<Type>,
+    param_type: Box<Type>,
+    return_type: Box<Type>,
   },
 }
 

@@ -1,25 +1,39 @@
 #![warn(unknown_lints)]
 #![allow(clippy::all)] 
-use crate::ast::{Term, Type};
+use crate::ast::{Term, Kind, Type};
 use std::str::FromStr;
 
 grammar;
 
 identifier = r"[a-z]";
+type_variable = r"[A-Z]";
 
 pub Term: Term = {
   "λ" <var: identifier> ":" <param_type: Type> "." <body: Term> => 
-    Term::Abs {
-      param_name: String::from(var), 
-      param_type, 
-      body: Box::new(body) 
-    },
+  Term::Abs {
+    param_name: String::from(var), 
+    param_type, 
+    body: Box::new(body) 
+  },
+
+  "Λ" <type_var: type_variable> ":" <kind: Kind> "."  "λ" <param_name: identifier> ":" <param_type: Type> "." <body: Term> => 
+  Term::UniversalAbs {
+    type_var: String::from(type_var),
+    kind: kind,
+    body: Box::new(Term::Abs {
+      param_name: String::from(param_name),
+      param_type: param_type,
+      body: Box::new(body),
+    }),
+  },
 
   Term1
 }
 
 Term1: Term = {
   <f: Term1> <arg: Terminal> => Term::App(Box::new(f), Box::new(arg)),
+
+  <type_abs: Term1> "[" <typ: Type> "]" => Term::UniversalApp(Box::new(type_abs), typ),
 
   Terminal
 }
@@ -38,8 +52,24 @@ Type: Type = {
   #[precedence(level="1")]
   "Int" => Type::Int,
 
+  #[precedence(level="1")]
+  type_variable => Type::TypeVar(String::from(<>)),
+
   #[precedence(level="2")]
   #[assoc(side="right")]
   <param_type: Type> "->" <return_type: Type> =>
     Type::Arrow(Box::new(param_type), Box::new(return_type)),
+
+  #[precedence(level="3")]
+  "∀" <type_var: type_variable> ":" <kind: Kind> "." <typ: Type> =>
+    Type::Forall {
+      type_var: String::from(type_var),
+      kind: kind,
+      param_type: Box::new(Type::TypeVar(String::from(type_var))),
+      return_type: Box::new(typ),
+    }
+}
+
+Kind: Kind = {
+  "*" => Kind::Star,
 }

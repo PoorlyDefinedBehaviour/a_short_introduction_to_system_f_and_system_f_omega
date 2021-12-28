@@ -37,8 +37,12 @@ use thiserror::Error;
 //
 //      Γ, α : κ ⊢ t : τ
 // ----------------------------
-// Γ ⊢ (Λα : κ. t) : ∀α : κ . τ
+// Γ ⊢ (Λα : κ. t) : (∀α : κ . τ)
 //
+//
+// Γ ⊢ t : (∀α : κ . τ)   Γ ⊢ σ
+// ----------------------------
+//      Γ ⊢ t σ : τ[σ/α]
 //
 // -------------------------
 // (Λα : κ . t) σ |> t[σ/α]
@@ -117,6 +121,35 @@ impl TypingContext {
   }
 }
 
+fn subst(type_var: &String, from: &Type, to: Type) -> Type {
+  match from {
+    Type::Int => Type::Int,
+    Type::Arrow(param_type, return_type) => Type::Arrow(
+      Box::new(subst(type_var, param_type, to.clone())),
+      Box::new(subst(type_var, return_type, to)),
+    ),
+    Type::TypeVar(x) => {
+      // TODO: use capture avoiding substitution.
+      if x == type_var {
+        to
+      } else {
+        from.clone()
+      }
+    }
+    Type::Forall {
+      param_type,
+      return_type,
+      kind,
+      type_var,
+    } => Type::Forall {
+      param_type: param_type.clone(),
+      kind: kind.clone(),
+      type_var: type_var.clone(),
+      return_type: Box::new(subst(&type_var, &return_type, to)),
+    },
+  }
+}
+
 fn type_of(ctx: &TypingContext, term: &Term) -> Result<Type, TypecheckerError> {
   match term {
     Term::Int(_) => Ok(Type::Int),
@@ -138,7 +171,7 @@ fn type_of(ctx: &TypingContext, term: &Term) -> Result<Type, TypecheckerError> {
       } => {
         let arg_type = type_of(ctx, arg)?;
 
-        if &arg_type != param_type {
+        if param_type != &arg_type {
           return Err(TypecheckerError::TypeMismatch {
             term: *arg.clone(),
             expected: param_type.clone(),
@@ -172,6 +205,36 @@ fn type_of(ctx: &TypingContext, term: &Term) -> Result<Type, TypecheckerError> {
         Box::new(body_typ),
       ))
     }
+    Term::UniversalAbs {
+      type_var,
+      kind,
+      body,
+    } => Ok(Type::Forall {
+      type_var: type_var.clone(),
+      kind: kind.clone(),
+      param_type: Box::new(Type::TypeVar(type_var.clone())),
+      return_type: Box::new(type_of(ctx, body)?),
+    }),
+    // Γ ⊢ t : (∀α : κ . τ)   Γ ⊢ σ
+    // ----------------------------
+    //      Γ ⊢ t σ : τ[σ/α]
+    Term::UniversalApp(term, typ) => match type_of(ctx, term)? {
+      Type::Forall {
+        return_type,
+        type_var,
+        ..
+      } => {
+        // (\x. e')[v/x] = \x. e' -- we do not substitute because x is bound by the lambda
+        // (\y. e')[v/x] = (\y. e'[v/x]) -- recursively substitute lambda body
+        // (\y. x)[z/x] = (\y. z) -- replace x with z
+        // (\z. x)[z/x] = (\z. x) -- do not substitute x because it would change the function behaviour
+        Ok(subst(&type_var, &return_type, typ.clone()))
+      }
+      _ => Err(TypecheckerError::UnexpectedTerm {
+        expected: String::from("type abstraction"),
+        got: *term.clone(),
+      }),
+    },
   }
 }
 
