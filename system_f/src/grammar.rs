@@ -1,5 +1,5 @@
 // auto-generated: "lalrpop 0.19.6"
-// sha3: 3b9824d37435ae67575f80cf3759cc3158276d6fdc17390ee5d7fbf5f81469a
+// sha3: c9068af8b3218eadefb4e1e5c8cca355dfc817d7b2ae75095cf1ce814ba
 #![warn(unknown_lints)]
 #![allow(clippy::all)]
 use crate::ast::{Term, Kind, Type};
@@ -1280,8 +1280,7 @@ fn __action18<
     Type::Forall {
       type_var: String::from(type_var),
       kind: kind,
-      param_type: Box::new(Type::TypeVar(String::from(type_var))),
-      return_type: Box::new(typ),
+      typ: Box::new(typ),
     }
 }
 

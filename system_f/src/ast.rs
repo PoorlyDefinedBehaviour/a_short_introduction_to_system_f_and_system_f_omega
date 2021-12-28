@@ -22,12 +22,11 @@ pub enum Type {
   Arrow(Box<Type>, Box<Type>),
   // TypeVar
   TypeVar(String),
-  // ∀ TypeVar : Kind . Type -> Type
+  // ∀ TypeVar : Kind . Type
   Forall {
     type_var: String,
     kind: Kind,
-    param_type: Box<Type>,
-    return_type: Box<Type>,
+    typ: Box<Type>,
   },
 }
 

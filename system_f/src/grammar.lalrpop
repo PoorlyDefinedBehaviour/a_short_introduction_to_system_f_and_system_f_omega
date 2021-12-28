@@ -68,8 +68,7 @@ Type: Type = {
     Type::Forall {
       type_var: String::from(type_var),
       kind: kind,
-      param_type: Box::new(Type::TypeVar(String::from(type_var))),
-      return_type: Box::new(typ),
+      typ: Box::new(typ),
     }
 }
 
