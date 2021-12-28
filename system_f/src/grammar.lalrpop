@@ -50,6 +50,9 @@ Int: i32 = <s: r"[0-9]+"> => i32::from_str(s).unwrap();
 
 Type: Type = {
   #[precedence(level="1")]
+  "Bool" => Type::Bool,
+
+  #[precedence(level="1")]
   "Int" => Type::Int,
 
   #[precedence(level="1")]

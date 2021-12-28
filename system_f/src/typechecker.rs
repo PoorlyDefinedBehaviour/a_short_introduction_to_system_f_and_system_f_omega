@@ -123,6 +123,7 @@ impl TypingContext {
 
 fn subst(type_var: &String, from: &Type, to: Type) -> Type {
   match from {
+    Type::Bool => Type::Bool,
     Type::Int => Type::Int,
     Type::Arrow(param_type, return_type) => Type::Arrow(
       Box::new(subst(type_var, param_type, to.clone())),

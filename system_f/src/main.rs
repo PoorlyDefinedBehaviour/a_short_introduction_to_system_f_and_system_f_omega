@@ -9,6 +9,6 @@ fn parse(input: &str) -> Term {
 }
 
 fn main() {
-  let e = "(ΛX: * . λx: X. x) [Int]";
+  let e = "(ΛX: * . λx: X. x) [Bool]";
   dbg!(typechecker::infer(&parse(e)));
 }

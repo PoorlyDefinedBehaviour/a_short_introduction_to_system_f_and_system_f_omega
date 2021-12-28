@@ -16,6 +16,8 @@ pub enum Kind {
 pub enum Type {
   // *
   Int,
+  // *
+  Bool,
   // Type -> Type
   Arrow(Box<Type>, Box<Type>),
   // TypeVar
@@ -39,6 +41,7 @@ pub enum Type {
 //  | Term Type               -- universal application
 #[derive(Debug, Clone, PartialEq)]
 pub enum Term {
+  // Int
   Int(i32),
   // Var
   Var(String),
